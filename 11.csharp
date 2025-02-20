@@ -1,0 +1,282 @@
+
+using System;
+using System.Collections.Generic;
+
+class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
+{
+    private int day;
+    private int month;
+    private int year;
+    private string eventName;
+
+    public HistoricalEvent()
+    {
+        day = 1;
+        month = 1;
+        year = 1900;
+        eventName = "Unknown";
+    }
+
+    public HistoricalEvent(int day, int month, int year, string eventName)
+    {
+        if (!IsValidDate(day, month, year))
+            throw new ArgumentException("Некорректная дата.");
+        this.day = day;
+        this.month = month;
+        this.year = year;
+        this.eventName = eventName ?? throw new ArgumentNullException("Название события не может быть null.");
+    }
+
+    public HistoricalEvent(string eventName)
+    {
+        this.eventName = eventName ?? throw new ArgumentNullException("Название события не может быть null.");
+        day = 1;
+        month = 1;
+        year = 1900;
+    }
+
+    public int Day
+    {
+        get => day;
+        set
+        {
+            if (!IsValidDate(value, month, year))
+                throw new ArgumentException("Некорректное значение дня.");
+            day = value;
+        }
+    }
+
+    public int Month
+    {
+        get => month;
+        set
+        {
+            if (!IsValidDate(day, value, year))
+                throw new ArgumentException("Некорректное значение месяца.");
+            month = value;
+        }
+    }
+
+    public int Year
+    {
+        get => year;
+        set
+        {
+            if (!IsValidDate(day, month, value))
+                throw new ArgumentException("Некорректное значение года.");
+            year = value;
+        }
+    }
+
+    public string EventName
+    {
+        get => eventName;
+        set => eventName = value ?? throw new ArgumentNullException("Название события не может быть null.");
+    }
+
+    private bool IsValidDate(int day, int month, int year)
+    {
+        if (year < 1 || month < 1 || month > 12 || day < 1)
+            return false;
+        return day <= DateTime.DaysInMonth(year, month);
+    }
+
+    public void InputFromKeyboard()
+    {
+        Console.Write("Введите день: ");
+        Day = int.Parse(Console.ReadLine());
+
+        Console.Write("Введите месяц: ");
+        Month = int.Parse(Console.ReadLine());
+
+        Console.Write("Введите год: ");
+        Year = int.Parse(Console.ReadLine());
+
+        Console.Write("Введите название события: ");
+        EventName = Console.ReadLine();
+    }
+
+    public void Print()
+    {
+        Console.WriteLine($"Дата: {Day}.{Month}.{Year}, Событие: {EventName}");
+    }
+
+    public override string ToString()
+    {
+        return $"{Day}.{Month}.{Year} - {EventName}";
+    }
+
+    public static int operator -(HistoricalEvent event1, HistoricalEvent event2)
+    {
+        DateTime date1 = new DateTime(event1.Year, event1.Month, event1.Day);
+        DateTime date2 = new DateTime(event2.Year, event2.Month, event2.Day);
+        TimeSpan interval = date1 - date2;
+        return Math.Abs(interval.Days);
+    }
+
+    // Реализация IComparable<HistoricalEvent> (сравнение по дате)
+    public int CompareTo(HistoricalEvent other)
+    {
+        DateTime thisDate = new DateTime(this.Year, this.Month, this.Day);
+        DateTime otherDate = new DateTime(other.Year, other.Month, other.Day);
+        return thisDate.CompareTo(otherDate);
+    }
+
+    // Реализация IComparer<HistoricalEvent> (сравнение по названию)
+    public int Compare(HistoricalEvent x, HistoricalEvent y)
+    {
+        return string.Compare(x.EventName, y.EventName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Переопределение операций сравнения
+    public static bool operator >(HistoricalEvent a, HistoricalEvent b)
+    {
+        return a.CompareTo(b) > 0;
+    }
+
+    public static bool operator <(HistoricalEvent a, HistoricalEvent b)
+    {
+        return a.CompareTo(b) < 0;
+    }
+
+    public static bool operator >=(HistoricalEvent a, HistoricalEvent b)
+    {
+        return a.CompareTo(b) >= 0;
+    }
+
+    public static bool operator <=(HistoricalEvent a, HistoricalEvent b)
+    {
+        return a.CompareTo(b) <= 0;
+    }
+
+    // Модифицированный метод поиска наиболее позднего события
+    public static HistoricalEvent FindLatestEvent(HistoricalEvent[] events)
+    {
+        if (events == null || events.Length == 0)
+            throw new ArgumentException("Массив событий пуст.");
+
+        HistoricalEvent latestEvent = events[0];
+        foreach (var ev in events)
+        {
+            if (ev > latestEvent)
+                latestEvent = ev;
+        }
+
+        return latestEvent;
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        HistoricalEvent[] events = new HistoricalEvent[20];
+        int count = 0;
+
+        while (true)
+        {
+            Console.WriteLine("Меню:");
+            Console.WriteLine("1. Добавить событие");
+            Console.WriteLine("2. Вывести все события");
+            Console.WriteLine("3. Найти интервал между двумя событиями");
+            Console.WriteLine("4. Найти наиболее позднее событие");
+            Console.WriteLine("5. Найти событие по названию");
+            Console.WriteLine("6. Сортировать события по названию");
+            Console.WriteLine("7. Сортировать события по дате");
+            Console.WriteLine("8. Выйти");
+            Console.Write("Выберите действие: ");
+            int choice = int.Parse(Console.ReadLine());
+
+            switch (choice)
+            {
+                case 1:
+                    if (count < 20)
+                    {
+                        events[count] = new HistoricalEvent();
+                        events[count].InputFromKeyboard();
+                        count++;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Массив событий заполнен.");
+                    }
+                    break;
+
+                case 2:
+                    for (int i = 0; i < count; i++)
+                    {
+                        events[i].Print();
+                    }
+                    break;
+
+                case 3:
+                    if (count < 2)
+                    {
+                        Console.WriteLine("Недостаточно событий для вычисления интервала.");
+                        break;
+                    }
+                    Console.WriteLine("Введите индексы двух событий:");
+                    int index1 = int.Parse(Console.ReadLine());
+                    int index2 = int.Parse(Console.ReadLine());
+                    if (index1 >= 0 && index1 < count && index2 >= 0 && index2 < count)
+                    {
+                        int interval = events[index1] - events[index2];
+                        Console.WriteLine($"Интервал между событиями: {interval} дней.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Некорректные индексы.");
+                    }
+                    break;
+
+                case 4:
+                    try
+                    {
+                        HistoricalEvent latestEvent = HistoricalEvent.FindLatestEvent(events);
+                        Console.WriteLine("Наиболее позднее событие:");
+                        latestEvent.Print();
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                    break;
+
+                case 5:
+                    Console.Write("Введите название события: ");
+                    string searchName = Console.ReadLine();
+                    bool found = false;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (events[i].EventName.Equals(searchName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            events[i].Print();
+                            found = true;
+                        }
+                    }
+                    if (!found)
+                    {
+                        Console.WriteLine("Событие не найдено.");
+                    }
+                    break;
+
+                case 6:
+                    Array.Sort(events, new HistoricalEvent()); // Сортировка по названию
+                    Console.WriteLine("События отсортированы по названию.");
+                    break;
+
+                case 7:
+                    Array.Sort(events); // Сортировка по дате
+                    Console.WriteLine("События отсортированы по дате.");
+                    break;
+
+                case 8:
+                    return;
+
+                default:
+                    Console.WriteLine("Некорректный выбор.");
+                    break;
+            }
+        }
+    }
+}
