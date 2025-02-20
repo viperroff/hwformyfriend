@@ -1,0 +1,43 @@
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        int[] array = new int[10];
+        Random rnd = new Random();
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = rnd.Next(-10, 11);
+        }
+
+        Console.WriteLine("Сгенерированный массив:");
+        foreach (int num in array)
+        {
+            Console.Write(num + " ");
+        }
+        Console.WriteLine();
+
+        int signChanges = 0;
+        int previousSign = 0;
+
+        foreach (int num in array)
+        {
+            int currentSign = Math.Sign(num);
+            
+            if (currentSign == 0) continue; 
+            
+            if (previousSign == 0)
+            {
+                previousSign = currentSign; 
+            }
+            else if (currentSign != previousSign)
+            {
+                signChanges++;
+                previousSign = currentSign;
+            }
+        }
+
+        Console.WriteLine($"Количество перемен знака: {signChanges}");
+    }
+}
