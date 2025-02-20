@@ -1,0 +1,141 @@
+using System;
+using System.Linq;
+
+class CStr
+{
+    protected string str;
+
+    public CStr()
+    {
+        str = "";
+    }
+
+    public CStr(string s)
+    {
+        str = s;
+    }
+
+    public string Str
+    {
+        get => str;
+        set => str = value;
+    }
+
+    public virtual void Print()
+    {
+        Console.WriteLine("Строка: " + str);
+    }
+}
+
+class CSStr : CStr
+{
+    public CSStr() : base() { }
+
+    public CSStr(string s) : base()
+    {
+        if (IsHexString(s))
+            str = s.ToUpper(); 
+        else
+            str = ""; 
+    }
+
+    private bool IsHexString(string s)
+    {
+        return s.All(c => "0123456789ABCDEFabcdef".Contains(c));
+    }
+
+    public int ToDecimal()
+    {
+        if (string.IsNullOrEmpty(str))
+            throw new InvalidOperationException("Строка пуста или содержит недопустимые символы.");
+
+        return Convert.ToInt32(str, 16);
+    }
+
+    public void ChangeSign()
+    {
+        if (string.IsNullOrEmpty(str))
+            throw new InvalidOperationException("Строка пуста или содержит недопустимые символы.");
+
+        int num = ToDecimal();
+        num = -num;
+        str = num.ToString("X").ToUpper(); 
+    }
+
+    public static CSStr operator +(CSStr a, CSStr b)
+    {
+        if (string.IsNullOrEmpty(a.str) || string.IsNullOrEmpty(b.str))
+            throw new InvalidOperationException("Одна из строк пуста или содержит недопустимые символы.");
+
+        int num1 = a.ToDecimal();
+        int num2 = b.ToDecimal();
+        int sum = num1 + num2;
+        return new CSStr(sum.ToString("X").ToUpper());
+    }
+
+    public static bool operator ==(CSStr a, CSStr b)
+    {
+        return a.str == b.str;
+    }
+
+    public static bool operator !=(CSStr a, CSStr b)
+    {
+        return a.str != b.str;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is CSStr other)
+            return str == other.str;
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return str.GetHashCode();
+    }
+
+    public override string ToString()
+    {
+        return str;
+    }
+
+    public override void Print()
+    {
+        Console.WriteLine("Шестнадцатеричная строка: " + str);
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+        CSStr hexStr1 = new CSStr("1A3F");
+        CSStr hexStr2 = new CSStr("B2C");
+        CSStr hexStr3 = new CSStr("XYZ"); 
+
+        Console.WriteLine("Строка 1:");
+        hexStr1.Print();
+
+        Console.WriteLine("Строка 2:");
+        hexStr2.Print();
+
+        Console.WriteLine("Строка 3 (недопустимые символы):");
+        hexStr3.Print();
+
+        Console.WriteLine("Десятичное значение строки 1: " + hexStr1.ToDecimal());
+        Console.WriteLine("Десятичное значение строки 2: " + hexStr2.ToDecimal());
+
+        hexStr1.ChangeSign();
+        Console.WriteLine("Строка 1 после изменения знака:");
+        hexStr1.Print();
+
+        CSStr sum = hexStr1 + hexStr2;
+        Console.WriteLine("Сумма строк 1 и 2:");
+        sum.Print();
+
+        Console.WriteLine("Строка 1 == Строка 2: " + (hexStr1 == hexStr2));
+    }
+}
