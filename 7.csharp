@@ -1,0 +1,71 @@
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        int[][] jaggedArray = GenerateJaggedArray();
+        
+        Console.WriteLine("Сгенерированный ступенчатый массив:");
+        PrintJaggedArray(jaggedArray);
+
+        try
+        {
+            int sum = SumFirstAndLastElements(jaggedArray);
+            Console.WriteLine($"Сумма элементов на первой и последней позиции каждой строки: {sum}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+    }
+
+    static int[][] GenerateJaggedArray()
+    {
+        Random rnd = new Random();
+        int rows = rnd.Next(3, 6); 
+        int[][] jaggedArray = new int[rows][];
+
+        for (int i = 0; i < rows; i++)
+        {
+            int cols = rnd.Next(1, 6); 
+            jaggedArray[i] = new int[cols];
+            for (int j = 0; j < cols; j++)
+            {
+                jaggedArray[i][j] = rnd.Next(-10, 11); 
+            }
+        }
+
+        return jaggedArray;
+    }
+
+    static void PrintJaggedArray(int[][] jaggedArray)
+    {
+        foreach (int[] row in jaggedArray)
+        {
+            foreach (int num in row)
+            {
+                Console.Write(num + " ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    static int SumFirstAndLastElements(int[][] jaggedArray)
+{
+    if (jaggedArray == null || jaggedArray.Length == 0)
+        throw new InvalidOperationException("Массив пуст.");
+
+    int sum = 0;
+
+    foreach (int[] row in jaggedArray)
+    {
+        if (row == null || row.Length == 0)
+            throw new InvalidOperationException("Одна из строк массива пуста.");
+
+        sum += row[0] + row[row.Length - 1];
+    }
+
+    return sum;
+}
+}
