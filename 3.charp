@@ -1,0 +1,29 @@
+using System;
+using System.Globalization;
+
+class Program
+{
+    static void Main()
+    {
+        Console.Write("Введите вещественное число: ");
+        double i = Convert.ToDouble(Console.ReadLine());
+
+        Console.Clear();
+
+        Console.BackgroundColor = ConsoleColor.DarkBlue;
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Clear();
+
+        Console.WindowWidth = (int)(Console.WindowWidth * 1.33);
+        Console.WindowHeight = (int)(Console.WindowHeight * 1.33);
+
+        Console.SetCursorPosition(0, 0);
+        Console.WriteLine(DateTime.Now.ToString("D", new CultureInfo("ru-RU")));
+
+        Console.SetCursorPosition(0, 9);
+        Console.WriteLine($"i = {i.ToString("00000000000000000000000000000.00", CultureInfo.InvariantCulture)}");
+        
+        Console.ResetColor();
+        Console.ReadKey();
+    }
+}
