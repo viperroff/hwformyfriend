@@ -1,0 +1,44 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace assignment5
+{   class program
+    {        
+        static void Main(string[] args)
+        {            
+            string distance;
+            string speed;            
+            Console.Write("Введите расстояние: ");
+            distance = Console.ReadLine();
+            Console.Write("Введите скорость: ");
+            speed = Console.ReadLine();
+            try
+            {                
+                Console.WriteLine("Время: " + Except(distance, speed));
+            }            
+            catch (ArgumentOutOfRangeException e)
+            {                
+                Console.WriteLine("FormatException : {0}\nFile: {1}\nLocation : {2} ", e.Message, e.Source, e.TargetSite);
+            }        
+            
+        }
+        static float Except(string distance, string speed)        
+        {
+            double distance_d = double.Parse(distance);            
+            double speed_d = double.Parse(speed);
+            if (distance_d < 0)            
+            {
+                throw new ArgumentOutOfRangeException("Расстояние не может быть отрицательным!");            
+                
+            }
+            if (speed_d < 0)            
+            {
+                throw new ArgumentOutOfRangeException("Скорость не может быть отрицатетельной!");            
+                
+            }
+            return (float)(distance_d / speed_d);        
+            
+        }
+    }}
