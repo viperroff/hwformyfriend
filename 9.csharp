@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 class HistoricalEvent
 {
@@ -19,6 +20,7 @@ class HistoricalEvent
     {
         if (!IsValidDate(day, month, year))
             throw new ArgumentException("Некорректная дата.");
+        
         this.day = day;
         this.month = month;
         this.year = year;
@@ -27,7 +29,9 @@ class HistoricalEvent
 
     public HistoricalEvent(string eventName)
     {
-        this.eventName = eventName ?? throw new ArgumentNullException("Название события не может быть null.");
+        this.eventName = !string.IsNullOrWhiteSpace(eventName) 
+            ? eventName 
+            : throw new ArgumentNullException("Название события не может быть пустым.");
         day = 1;
         month = 1;
         year = 1900;
@@ -35,7 +39,7 @@ class HistoricalEvent
 
     public int Day
     {
-        get => day;
+        get { return day; }
         set
         {
             if (!IsValidDate(value, month, year))
@@ -46,7 +50,7 @@ class HistoricalEvent
 
     public int Month
     {
-        get => month;
+        get { return month; }
         set
         {
             if (!IsValidDate(day, value, year))
@@ -57,7 +61,7 @@ class HistoricalEvent
 
     public int Year
     {
-        get => year;
+        get { return year; }
         set
         {
             if (!IsValidDate(day, month, value))
@@ -68,8 +72,13 @@ class HistoricalEvent
 
     public string EventName
     {
-        get => eventName;
-        set => eventName = value ?? throw new ArgumentNullException("Название события не может быть null.");
+        get { return eventName; }
+        set 
+        { 
+            eventName = !string.IsNullOrWhiteSpace(value) 
+                ? value 
+                : throw new ArgumentNullException("Название события не может быть пустым.");
+        }
     }
 
     private bool IsValidDate(int day, int month, int year)
@@ -81,56 +90,77 @@ class HistoricalEvent
 
     public void InputFromKeyboard()
     {
-        Console.Write("Введите день: ");
-        Day = int.Parse(Console.ReadLine());
+        while (true)
+        {
+            try
+            {
+                Console.Write("Введите год: ");
+                if (!int.TryParse(Console.ReadLine(), out int y) || y < 1)
+                    throw new FormatException("Некорректный год");
 
-        Console.Write("Введите месяц: ");
-        Month = int.Parse(Console.ReadLine());
+                Console.Write("Введите месяц: ");
+                if (!int.TryParse(Console.ReadLine(), out int m) || m < 1 || m > 12)
+                    throw new FormatException("Некорректный месяц");
 
-        Console.Write("Введите год: ");
-        Year = int.Parse(Console.ReadLine());
+                Console.Write("Введите день: ");
+                if (!int.TryParse(Console.ReadLine(), out int d) || d < 1 || d > DateTime.DaysInMonth(y, m))
+                    throw new FormatException("Некорректный день");
 
-        Console.Write("Введите название события: ");
-        EventName = Console.ReadLine();
+                Console.Write("Введите название события: ");
+                string name = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new ArgumentNullException("Название события не может быть пустым.");
+
+                day = d;
+                month = m;
+                year = y;
+                eventName = name;
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}\nПовторите ввод!\n");
+            }
+        }
     }
 
     public void Print()
     {
-        Console.WriteLine($"Дата: {Day}.{Month}.{Year}, Событие: {EventName}");
+        Console.WriteLine(this.ToString());
     }
 
     public override string ToString()
     {
-        return $"{Day}.{Month}.{Year} - {EventName}";
+        return $"{day:D2}.{month:D2}.{year} - {eventName}";
     }
 
     public static int operator -(HistoricalEvent event1, HistoricalEvent event2)
     {
         DateTime date1 = new DateTime(event1.Year, event1.Month, event1.Day);
         DateTime date2 = new DateTime(event2.Year, event2.Month, event2.Day);
-        TimeSpan interval = date1 - date2;
-        return Math.Abs(interval.Days);
+        return Math.Abs((date1 - date2).Days);
     }
 
     public static HistoricalEvent FindLatestEvent(HistoricalEvent[] events)
     {
-        if (events == null || events.Length == 0)
-            throw new ArgumentException("Массив событий пуст.");
+        if (events == null || !events.Any(e => e != null))
+            throw new ArgumentException("Нет доступных событий");
 
-        HistoricalEvent latestEvent = events[0];
-        DateTime latestDate = new DateTime(latestEvent.Year, latestEvent.Month, latestEvent.Day);
+        DateTime latestDate = DateTime.MinValue;
+        HistoricalEvent result = null;
 
         foreach (var ev in events)
         {
+            if (ev == null) continue;
+            
             DateTime currentDate = new DateTime(ev.Year, ev.Month, ev.Day);
             if (currentDate > latestDate)
             {
                 latestDate = currentDate;
-                latestEvent = ev;
+                result = ev;
             }
         }
-
-        return latestEvent;
+        return result ?? throw new ArgumentException("Все элементы массива пусты");
     }
 }
 
@@ -143,96 +173,131 @@ class Program
 
         while (true)
         {
-            Console.WriteLine("Меню:");
+            Console.WriteLine("\nМеню:");
             Console.WriteLine("1. Добавить событие");
             Console.WriteLine("2. Вывести все события");
-            Console.WriteLine("3. Найти интервал между двумя событиями");
-            Console.WriteLine("4. Найти наиболее позднее событие");
-            Console.WriteLine("5. Найти событие по названию");
-            Console.WriteLine("6. Выйти");
+            Console.WriteLine("3. Найти интервал между событиями");
+            Console.WriteLine("4. Найти последнее событие");
+            Console.WriteLine("5. Поиск по названию");
+            Console.WriteLine("6. Выход");
             Console.Write("Выберите действие: ");
-            int choice = int.Parse(Console.ReadLine());
+
+            if (!int.TryParse(Console.ReadLine(), out int choice))
+            {
+                Console.WriteLine("Некорректный ввод!\n");
+                continue;
+            }
 
             switch (choice)
             {
                 case 1:
-                    if (count < 20)
+                    if (count >= 20)
                     {
-                        events[count] = new HistoricalEvent();
-                        events[count].InputFromKeyboard();
-                        count++;
+                        Console.WriteLine("Достигнут лимит событий!");
+                        break;
                     }
-                    else
+                    
+                    try
                     {
-                        Console.WriteLine("Массив событий заполнен.");
+                        var newEvent = new HistoricalEvent();
+                        newEvent.InputFromKeyboard();
+                        events[count++] = newEvent;
+                        Console.WriteLine("Событие добавлено!");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка: {ex.Message}");
                     }
                     break;
 
                 case 2:
+                    if (count == 0)
+                    {
+                        Console.WriteLine("Список событий пуст!");
+                        break;
+                    }
+                    
+                    Console.WriteLine("\nСписок событий:");
                     for (int i = 0; i < count; i++)
                     {
-                        events[i].Print();
+                        Console.WriteLine($"{i + 1}. {events[i]}");
                     }
                     break;
 
                 case 3:
                     if (count < 2)
                     {
-                        Console.WriteLine("Недостаточно событий для вычисления интервала.");
+                        Console.WriteLine("Требуется минимум 2 события!");
                         break;
                     }
-                    Console.WriteLine("Введите индексы двух событий:");
-                    int index1 = int.Parse(Console.ReadLine());
-                    int index2 = int.Parse(Console.ReadLine());
-                    if (index1 >= 0 && index1 < count && index2 >= 0 && index2 < count)
+                    
+                    try
                     {
+                        Console.Write("Введите номер первого события: ");
+                        int index1 = GetIndex(count);
+                        Console.Write("Введите номер второго события: ");
+                        int index2 = GetIndex(count);
+                        
                         int interval = events[index1] - events[index2];
-                        Console.WriteLine($"Интервал между событиями: {interval} дней.");
+                        Console.WriteLine($"Интервал: {interval} дней");
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Console.WriteLine("Некорректные индексы.");
+                        Console.WriteLine($"Ошибка: {ex.Message}");
                     }
                     break;
 
                 case 4:
                     try
                     {
-                        HistoricalEvent latestEvent = HistoricalEvent.FindLatestEvent(events);
-                        Console.WriteLine("Наиболее позднее событие:");
-                        latestEvent.Print();
+                        var latest = HistoricalEvent.FindLatestEvent(events);
+                        Console.WriteLine($"Последнее событие: {latest}");
                     }
-                    catch (ArgumentException ex)
+                    catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
                     }
                     break;
 
                 case 5:
-                    Console.Write("Введите название события: ");
-                    string searchName = Console.ReadLine();
-                    bool found = false;
-                    for (int i = 0; i < count; i++)
+                    Console.Write("Введите поисковый запрос: ");
+                    string query = Console.ReadLine();
+                    var results = events.Take(count)
+                        .Where(e => e != null && e.EventName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                    
+                    if (results.Count == 0)
                     {
-                        if (events[i].EventName.Equals(searchName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            events[i].Print();
-                            found = true;
-                        }
+                        Console.WriteLine("Совпадений не найдено");
+                        break;
                     }
-                    if (!found)
-                    {
-                        Console.WriteLine("Событие не найдено.");
-                    }
+                    
+                    Console.WriteLine($"Найдено совпадений: {results.Count}");
+                    results.ForEach(Console.WriteLine);
                     break;
 
                 case 6:
+                    Console.WriteLine("Выход из программы");
                     return;
 
                 default:
-                    Console.WriteLine("Некорректный выбор.");
+                    Console.WriteLine("Некорректный выбор!");
                     break;
             }
+        }
+    }
+
+    private static int GetIndex(int max)
+    {
+        while (true)
+        {
+            int index;
+            if (!int.TryParse(Console.ReadLine(), out index) || index < 1 || index > max)
+            {
+                Console.Write($"Введите число от 1 до {max}: ");
+                continue;
+            }
+            return index - 1;
         }
     }
 }
