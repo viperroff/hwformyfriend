@@ -1,8 +1,7 @@
-
 using System;
 using System.Collections.Generic;
 
-class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
+class HistoricalEvent : IComparable<HistoricalEvent>
 {
     private int day;
     private int month;
@@ -84,13 +83,25 @@ class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
     public void InputFromKeyboard()
     {
         Console.Write("Введите день: ");
-        Day = int.Parse(Console.ReadLine());
+        while (!int.TryParse(Console.ReadLine(), out day) || !IsValidDate(day, month, year))
+        {
+            Console.WriteLine("Некорректный день. Попробуйте снова.");
+            Console.Write("Введите день:: ");
+        }
 
         Console.Write("Введите месяц: ");
-        Month = int.Parse(Console.ReadLine());
+        while (!int.TryParse(Console.ReadLine(), out month) || !IsValidDate(day, month, year))
+        {
+            Console.WriteLine("Некорректный месяц. Попробуйте снова.");
+            Console.Write("Введите месяц: ");
+        }
 
         Console.Write("Введите год: ");
-        Year = int.Parse(Console.ReadLine());
+        while (!int.TryParse(Console.ReadLine(), out year) || !IsValidDate(day, month, year))
+        {
+            Console.WriteLine("Некорректный год. Попробуйте снова.");
+            Console.Write("Введите год: ");
+        }
 
         Console.Write("Введите название события: ");
         EventName = Console.ReadLine();
@@ -122,12 +133,6 @@ class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
         return thisDate.CompareTo(otherDate);
     }
 
-    // Реализация IComparer<HistoricalEvent> (сравнение по названию)
-    public int Compare(HistoricalEvent x, HistoricalEvent y)
-    {
-        return string.Compare(x.EventName, y.EventName, StringComparison.OrdinalIgnoreCase);
-    }
-
     // Переопределение операций сравнения
     public static bool operator >(HistoricalEvent a, HistoricalEvent b)
     {
@@ -150,10 +155,10 @@ class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
     }
 
     // Модифицированный метод поиска наиболее позднего события
-    public static HistoricalEvent FindLatestEvent(HistoricalEvent[] events)
+    public static HistoricalEvent FindLatestEvent(List<HistoricalEvent> events)
     {
-        if (events == null || events.Length == 0)
-            throw new ArgumentException("Массив событий пуст.");
+        if (events == null || events.Count == 0)
+            throw new ArgumentException("Список событий пуст.");
 
         HistoricalEvent latestEvent = events[0];
         foreach (var ev in events)
@@ -166,12 +171,19 @@ class HistoricalEvent : IComparable<HistoricalEvent>, IComparer<HistoricalEvent>
     }
 }
 
+class EventNameComparer : IComparer<HistoricalEvent>
+{
+    public int Compare(HistoricalEvent x, HistoricalEvent y)
+    {
+        return string.Compare(x.EventName, y.EventName, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
 class Program
 {
     static void Main()
     {
-        HistoricalEvent[] events = new HistoricalEvent[20];
-        int count = 0;
+        List<HistoricalEvent> events = new List<HistoricalEvent>();
 
         while (true)
         {
@@ -190,11 +202,11 @@ class Program
             switch (choice)
             {
                 case 1:
-                    if (count < 20)
+                    if (events.Count < 20)
                     {
-                        events[count] = new HistoricalEvent();
-                        events[count].InputFromKeyboard();
-                        count++;
+                        HistoricalEvent newEvent = new HistoricalEvent();
+                        newEvent.InputFromKeyboard();
+                        events.Add(newEvent);
                     }
                     else
                     {
@@ -203,14 +215,14 @@ class Program
                     break;
 
                 case 2:
-                    for (int i = 0; i < count; i++)
+                    foreach (var ev in events)
                     {
-                        events[i].Print();
+                        ev.Print();
                     }
                     break;
 
                 case 3:
-                    if (count < 2)
+                    if (events.Count < 2)
                     {
                         Console.WriteLine("Недостаточно событий для вычисления интервала.");
                         break;
@@ -218,7 +230,7 @@ class Program
                     Console.WriteLine("Введите индексы двух событий:");
                     int index1 = int.Parse(Console.ReadLine());
                     int index2 = int.Parse(Console.ReadLine());
-                    if (index1 >= 0 && index1 < count && index2 >= 0 && index2 < count)
+                    if (index1 >= 0 && index1 < events.Count && index2 >= 0 && index2 < events.Count)
                     {
                         int interval = events[index1] - events[index2];
                         Console.WriteLine($"Интервал между событиями: {interval} дней.");
@@ -246,11 +258,11 @@ class Program
                     Console.Write("Введите название события: ");
                     string searchName = Console.ReadLine();
                     bool found = false;
-                    for (int i = 0; i < count; i++)
+                    foreach (var ev in events)
                     {
-                        if (events[i].EventName.Equals(searchName, StringComparison.OrdinalIgnoreCase))
+                        if (ev.EventName.Equals(searchName, StringComparison.OrdinalIgnoreCase))
                         {
-                            events[i].Print();
+                            ev.Print();
                             found = true;
                         }
                     }
@@ -261,12 +273,12 @@ class Program
                     break;
 
                 case 6:
-                    Array.Sort(events, new HistoricalEvent()); // Сортировка по названию
+                    events.Sort(new EventNameComparer());
                     Console.WriteLine("События отсортированы по названию.");
                     break;
 
                 case 7:
-                    Array.Sort(events); // Сортировка по дате
+                    events.Sort();
                     Console.WriteLine("События отсортированы по дате.");
                     break;
 
